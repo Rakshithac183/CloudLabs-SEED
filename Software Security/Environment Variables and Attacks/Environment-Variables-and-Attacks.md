@@ -33,7 +33,7 @@ sudo wget https://github.com/CloudLabs-MOC/CloudLabs-SEED/raw/main/Software%20Se
 ```
 sudo unzip Labsetup.zip
 ```
-![Download labsetup.zip folder from Github](/media/exe2-task1-labsetup-files-download.png)
+![Download labsetup.zip folder from Github](./media/exe2-task1-labsetup-files-download.png)
 
 ### 2.1 Task 1: Manipulating Environment Variables
 
