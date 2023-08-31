@@ -24,8 +24,8 @@ In this lab, students will understand how environment variables work, how they a
 
 ## 2 Lab Tasks
 
-Files needed for this lab are included in `Labsetup.zip`, which can be fetched by running the following commands.
- 
+Files needed for this lab are included in `Labsetup.zip`, which can be downloaded into the VM by running the following commands in the terminal.
+ 
 ```
 sudo wget https://github.com/CloudLabs-MOC/CloudLabs-SEED/raw/main/Software%20Security/Environment%20Variables%20and%20Attacks/Lab%20files/Labsetup.zip
 ```
@@ -33,19 +33,27 @@ sudo wget https://github.com/CloudLabs-MOC/CloudLabs-SEED/raw/main/Software%20Se
 ```
 sudo unzip Labsetup.zip
 ```
+![Download labsetup.zip folder from Github](/media/exe2-task1-labsetup-files-download.png)
 
 ### 2.1 Task 1: Manipulating Environment Variables
 
 In this task, we study the commands that can be used to set and unset environment variables. We are using Bash in the seed account. The default shell that a user uses is set in the `/etc/passwd` file (the last field of each entry). You can change this to another shell program using the command _chsh_ (please do not do it for this lab). Please do the following tasks:
 
 - Use `printenv` or `env` command to print out the environment variables. If you are interested in some particular environment variables, such as PWD, you can use "`printenv PWD`" or "`env | grep PWD`".
+
+![Run printenv in Terminal ](/media/exe2-task1-run-printenv.png)
+
 - Use `export` and `unset` to set or unset environment variables. It should be noted that these two commands are not separate programs; they are two of the Bash’s internal commands (you will not be able to find them outside of Bash).
+
+![Run export in Terminal ](/media/exe2-task1-run-export.png)
 
 ### 2.2 Task 2: Passing Environment Variables from Parent Process to Child Process
 
-In this task, we study how a child process gets its environment variables from its parent. In Unix,`fork()` creates a new process by duplicating the calling process. The new process, referred to as the child, is an exact duplicate of the calling process, referred to as the parent; however, several things are not inherited by the child (please see the manual of `fork()` by typing the following command:man fork). In this task, we would like to know whether the parent’s environment variables are inherited by the child process or not.
+In this task, we study how a child process gets its environment variables from its parent. In Unix, **fork()** creates a new process by duplicating the calling process. The new process, referred to as the child, is an exact duplicate of the calling process, referred to as the parent; however, several things are not inherited by the child (please see the manual of `fork()` by typing the following command: `man fork`). In this task, we would like to know whether the parent’s environment variables are inherited by the child process or not.
 
-**Step 1**. Please compile and run the following program, and describe your observation. The program can be found in the **Labsetup** folder, run `cd Labsetup` to change the folder ; it can be compiled using "`gcc myprintenv.c`", which will generate a binary called `a.out`. Let’s run it and save the output into a file using "`./a.out >  file`".
+**Step 1**. Please compile and run the following program, and describe your observation. The program can be found in the **Labsetup** folder, run `cd Labsetup` ***(1)*** to change the folder. Run `ls` ***(2)*** wherever needed to see the files present in that directoy. It can be compiled using `sudo gcc myprintenv.c` ***(3)***, which will generate a binary called `a.out`. Let’s login as root user by running `sudo su` ***(4)*** and run the a.out file and save the output into a file using `./a.out > file1.txt` ***(5)***.
+
+![Run export in Terminal ](/media/exe2.2-task2-step1-binaryfile1.png)
 
 Listing 1:myprintenv.c
 
@@ -78,15 +86,27 @@ void main()
 }
 ```
 
-**Step 2**. Now comment out the `printenv()` statement in the child process case (Line➁), and uncomment the `printenv()` statement in the parent process case (Line➁). Compile and run the code again, and describe your observation. Save the output in another file.
+**Step 2**. Now open the **myprintenv.c** file in **Nano** editor by running `nano myprintenv.c`. Once inside the nano editor, comment out the `printenv()` statement in the child process case (Line➀), and uncomment the `printenv()` statement in the parent process case (Line➁). Press **Ctrl+O** to save, then press **Enter** to write out to the file and lastly press **Ctrl+X** to exit the nano editor.
 
-**Step 3**. Compare the difference of these two files using the `diff` command. Please draw your conclusion.
+![Run export in Terminal ](/media/exe2.2-task2-step2-comment-printenv.png)
+
+**Step 3**. Next, delete the existing **a.out** binary file by running `rm a.out`.
+
+**Step 4**. Now, the step 1 and step 2 should be repeated for the updated **myprintenv.c** file by compiling it by running `gcc myprintenv.c` ***(1)***, which will generate a new binary file called `a.out`. Run `./a.out > file2.txt` to save the output of **a.out** file into **file2.txt** ***(2)*** file. 
+
+![Generate and run binary file 2](/media/exe2.2-task2-step4-gen-run-binary-file2.png)
+
+**Step 5**. Compare the difference of these two files using the `diff file1.txt file2.txt` ***(1)*** command. You will notice there will be no output as the binary files will be identical. Lastly, type `exit` ***(2)*** and press **Enter** to switch back to the non-root user.
+
+![Check file difference and exit](/media/exe2.2-task2-step5-diff-exit.png)
 
 ### 2.3 Task 3: Environment Variables and execve()
 
 In this task, we study how environment variables are affected when a new program is executed via `execve()`. The function `execve()` calls a system call to load a new command and execute it; this function never returns. No new process is created; instead, the calling process’s text, data, bss, and stack are overwritten by that of the program loaded. Essentially,`execve()` runs the new program inside the calling process. We are interested in what happens to the environment variables; are they automatically inherited by the new program?
 
-**Step 1.** Please compile and run the following program, and describe your observation. This program simply executes a program called `/usr/bin/env`, which prints out the environment variables of the current process.
+**Step 1.** Compile the below program by running `sudo gcc myenv.c -o myenv` ***(1)*** and then run it using `./myenv` ***(2)***. This program simply executes a program called `/usr/bin/env`, which prints out the environment variables of the current process. However, you will not see any output in this step. 
+
+![Compile and myenv.c file](/media/exe2.3-task3-step1-compile-run-myenv.png)
 
 Listing 2:myenv.c
 ```
@@ -102,13 +122,18 @@ int main()
     return 0 ;
 }
 ```
-**Step 2**. Change the invocation of `execve()` in Line➀ to the following; describe your observation.
+**Step 2**. You need to change the invocation of `execve()` in Line➀ in the myenv.c file to the following; by opening the file in nano editor using `sudo nano myenv.c`, then replace **NULL** in Line➀ with **environ**. To save the file, press **Ctrl + O** and press **Enter** to write out to the file and lastly press **Ctrl+X** to exit the nano editor.
 
 ```
 execve("/usr/bin/env", argv, environ);
 ```
 
-**Step 3**. Please draw your conclusion regarding how the new program gets its environment variables.
+![Replace NULL with environ](/media/exe2.3-task3-step2-edit-environ.png)
+
+
+**Step 3**. Compile the **myenv.c** file using `sudo gcc myenv.c -o myenv2` ***(1)*** and execute it using `./myenv2` ***(2)***. You can now see the new programs getting its environment variables.
+
+![Compile and run myenv2](/media/exe2.3-task3-step3-compile-run-myenv2.png.png)
 
 ### 2.4 Task 4: Environment Variables and system()
 
@@ -127,11 +152,22 @@ int main()
 }
 ```
 
+**Step 1**. Create a file called **mysys.c**(You can provide a custom name to the file) using `sudo nano mysys.c`. After entering inside the nano editor, copy and paste the above program in the editor. Next, proceed to save the file, press **Ctrl + O** and press **Enter** to write out to the file and finally press **Ctrl+X** to exit the nano editor. 
+
+![Create mysys.c file](/media/exe2.4-task4-step1-create-mysys-file.png)
+
+**Step 2**. Compile the **mysys.c** file using `sudo gcc mysys.c -o mysys` ***(1)*** and execute it using `./mysys` ***(2)***. You can see that running the binary file will output the environment variables.
+
+![Compile and run mysys.c file](/media/exe2.4-task4-step2-compile-run-mysys-file.png)
+
+
 ### 2.5 Task 5: Environment Variable and Set-UID Programs
 
 `Set-UID` is an important security mechanism in Unix operating systems. When a `Set-UID` program runs, it assumes the owner’s privileges. For example, if the program’s owner is root, when anyone runs this program, the program gains the root’s privileges during its execution. `Set-UID` allows us to do many interesting things, but since it escalates the user’s privilege, it is quite risky. Although the behaviors of `Set-UID` programs are decided by their program logic, not by users, users can indeed affect the behaviors via environment variables. To understand how `Set-UID` programs are affected, let us first figure out whether environment variables are inherited by the `Set-UID` program’s process from the user’s process.
 
-**Step 1**. Write the following program that can print out all the environment variables in the current process.
+**Step 1**. Write the following program that can print out all the environment variables in the current process, by creating a file **printenv.c**(You can provide a custom name to the file) using `sudo nano printenv.c`. Once within the nano editor, copy and paste the below provided program in the editor. To save the file, press **Ctrl + O**, press **Enter** to confirm the write action, and conclude by pressing **Ctrl+X** to exit the nano editor.
+
+![Create set-uid printenv.c file](/media/exe2.5-task5-step1-create-setuid-printenv-file.png)
 
 ```
 #include <stdio.h>
@@ -148,21 +184,50 @@ int main()
 }
 ```
 
-**Step 2**. Compile the above program, change its ownership toroot, and make it a `Set-UID` program.
+**Step 2**. Compile and run the above program using `sudo gcc printenv.c -o printenv` ***(1)*** and execute it using `./printenv` ***(2)***. You can see that executing printenv binary file will return the environment variables.
+
+![Compile and run printenv.c file](/media/exe2.5-task5-step2-compile-run-printenv.png)
+
+
+**Step 3**. Change its ownership to root, and make it a `Set-UID` program by running the below commands.
 
 ```
-// Asssume the program’s name is foo
-$ sudo chown root foo
-$ sudo chmod 4755 foo
+$ sudo chown root printenv
+$ sudo chmod 4755 printenv
+$ ls -l printenv
+```
+![Change file ownerhship](/media/exe2.5-task5-step3-change-ownership.png)
+
+>**Note:** Running **ls -l [FILE-NAME]** command will display detailed information about the specified file, showing details like its permissions, owner, group, file size, modification date, and more.
+
+**Step 4**. In your shell (you need to be in a normal user account, not the root account), run the below commands to see the directories of environment variable. You will notice that **echo $LD_LIBRARY_PATH** will not return any value.
+
+```
+$ echo $PATH
+$ echo $LD_LIBRARY_PATH
+```
+![Print existing environment variables value](/media/exe2.5-task5-step4-output-env-value.png)
+
+**Step 5**. Run the below commands to assign a value to the environment variables and then set environment variables using **export** command. You can provide a custom name and value for the **MYVAR** environment variable.
+
+```
+$ LD_LIBRARY_PATH='.'
+$ export LD_LIBRARY_PATH
+$ export MYVAR='my variable'
 ```
 
-**Step 3**. In your shell (you need to be in a normal user account, not the root account), use the export command to set the following environment variables (they may have already exist):
+![Assign value to environment variables](/media/exe2.5-task5-step5-set-envar-value.png)
 
-- PATH
-- LD_LIBRARY_PATH
-- ANYNAME(this is an environment variable defined by you, so pick whatever name you want).
+**Step 6**. Finally, you can verify if the environment variables are set by executing the below commands, which will print the values of environment variables.
 
-These environment variables are set in the user’s shell process. Now, run the `Set-UID` program from Step 2 in your shell. After you type the name of the program in your shell, the shell forks a child process, and uses the child process to run the program. Please check whether all the environment variables you set in the shell process (parent) get into the `Set-UID` child process. Describe your observation. If there are surprises to you, describe them.
+```
+$ printenv PATH
+$ printenv LD_LIBRARY_PATH
+$ printenv MYVAR
+```
+
+![Print environment variables](/media/exe2.5-task5-step6-print-envar-value.png)
+
 
 ### 2.6 Task 6: The PATH Environment Variable and Set-UIDPrograms
 
@@ -182,9 +247,9 @@ int main()
 }
 ```
 
-Please compile the above program, change its owner toroot, and make it a `Set-UID` program. Can you get this `Set-UID` program to run your own malicious code, instead of `/bin/ls` ? If you can, is your malicious code running with the root privilege? Describe and explain your observations.
+Please compile the above program, change its owner to root, and make it a `Set-UID` program. Can you get this `Set-UID` program to run your own malicious code, instead of `/bin/ls` ? If you can, is your malicious code running with the root privilege? Describe and explain your observations.
 
-**Note**: The `system(cmd)` function executes the `/bin/sh` program first, and then asks this shell program to run thecmdcommand. In Ubuntu 20.04 (and several versions before), `/bin/sh` is actually a symbolic link pointing to `/bin/dash`. This shell program has a countermeasure that prevents itself from being executed in a `Set-UID` process. Basically, if dash detects that it is executed in a `Set-UID` process, it immediately changes the effective user ID to the process’s real user ID, essentially dropping the privilege. 
+> **Note**: The `system(cmd)` function executes the `/bin/sh` program first, and then asks this shell program to run the cmd command. In Ubuntu 20.04 (and several versions before), `/bin/sh` is actually a symbolic link pointing to `/bin/dash`. This shell program has a countermeasure that prevents itself from being executed in a `Set-UID` process. Basically, if dash detects that it is executed in a `Set-UID` process, it immediately changes the effective user ID to the process’s real user ID, essentially dropping the privilege. 
 
 Since our victim program is a `Set-UID` program, the countermeasure in `/bin/dash` can prevent our attack. To see how our attack works without such a countermeasure, we will link `/bin/sh` to another shell that does not have such a countermeasure. We have installed a shell program calledzshin our Ubuntu 20.04 VM. We use the following commands to link `/bin/shto/bin/zsh:`
 
