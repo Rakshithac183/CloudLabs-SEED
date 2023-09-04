@@ -563,7 +563,7 @@ $ sudo gcc -shared -o libmylib.so.1 mylib.o -lc
 $ ls
 ```
 
-![Create shared library](./media/task7-step6-create-shared library.png)
+![Create shared library](./media/task7-step6-create-shared-library.png)
 
 **Step 7**. You have now set the LD_PRELOAD environment variable. Execute the commands following commands to check the the value LD_PRELOAD variable. Its value will be the library name.
 
