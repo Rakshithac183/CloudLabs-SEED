@@ -58,7 +58,7 @@ In this task, we study the commands that can be used to set and unset environmen
 
 In this task, we study how a child process gets its environment variables from its parent. In Unix, **fork()** creates a new process by duplicating the calling process. The new process, referred to as the child, is an exact duplicate of the calling process, referred to as the parent; however, several things are not inherited by the child (please see the manual of `fork()` by typing the following command: `man fork`). In this task, we would like to know whether the parent’s environment variables are inherited by the child process or not.
 
-**Step 1**. Please compile and run the following program, and describe your observation. The program can be found in the **Labsetup** folder, run `cd Labsetup` ***(1)*** to change the folder. Run `ls` ***(2)*** wherever needed to see the files present in that directoy. It can be compiled using `sudo gcc myprintenv.c` ***(3)***, which will generate a binary called `a.out`. Let’s login as root user by running `sudo su` ***(4)*** and run the a.out file and save the output into a file using `./a.out > file1.txt` ***(5)***.
+**Step 1**. Please compile and run the following program, and describe your observation. The program can be found in the **Labsetup** folder, run `cd Labsetup` ***(1)*** to change the folder. Run `ls` ***(2)*** wherever needed to list the files present in that directoy. It can be compiled using `sudo gcc myprintenv.c` ***(3)***, which will generate a binary called `a.out`. Let’s login as root user by running `sudo su` ***(4)*** and run the a.out file and save the output into a file using `./a.out > file1.txt` ***(5)***.
 
 ![Run export in Terminal ](./media/exe2.2-task2-step1-binaryfile1.png)
 
@@ -103,7 +103,7 @@ void main()
 
 ![Generate and run binary file 2](./media/exe2.2-task2-step4-gen-run-binary-file2.png)
 
-**Step 5**. Compare the difference of these two files using the `diff file1.txt file2.txt` ***(1)*** command. You will notice there will be no output as the binary files will be identical. Lastly, type `exit` ***(2)*** and press **Enter** to switch back to the non-root user.
+**Step 5**. Compare the difference of these two files using the `diff file1.txt file2.txt` ***(1)*** command. You will notice there will be no output as the binary files will be identical. Lastly, type `exit` ***(2)*** and press **Enter** to switch back to the seed user.
 
 ![Check file difference and exit](./media/exe2.2-task2-step5-diff-exit.png)
 
@@ -196,7 +196,7 @@ int main()
 ![Compile and run printenv.c file](./media/exe2.5-task5-step2-compile-run-printenv.png)
 
 
-**Step 3**. Change its ownership to root, and make it a `Set-UID` program by running the below commands.
+**Step 3**. Change the file's ownership to root, and make it a `Set-UID` program by running the below commands.
 
 ```
 $ sudo chown root printenv
@@ -384,7 +384,7 @@ $ ./ls
 
 ![Output ls and fake ./ls](./media/task6-step-16-print-fake-ls-files.png)
 
-**Step 17**. In the new tab you created, run the below commands to change the noral **myls** program to a Set-UID program. 
+**Step 17**. In the new tab you created, run the below commands to change the normal **myls** program to a Set-UID program. 
 
 ```
 $ sudo chown root myls
@@ -394,7 +394,7 @@ $ ls -l myls
 
 ![Update myls to set-UID program](./media/task6-step-17-update-myls-setuid.png)
 
-**Step 18**. Return to the previous tab (manipulated tab) and run the commands below to check if it will search for myls file. 
+**Step 18**. Return to the previous tab (Manipulated tab) and run the commands below to check if it will search for myls file. 
 
 ```
 $ ./myls
@@ -523,53 +523,191 @@ In this task, we study how `Set-UID` programs deal with some of the environment 
 
 In Linux, `ld.so or ld-linux.so`, are the dynamic loader/linker (each for different types of binary). Among the environment variables that affect their behaviors,`LD_LIBRARY_PATH and LD_PRELOAD` are the two that we are concerned in this lab. In Linux,`LD_LIBRARY_PATH` is a colon-separated set of directories where libraries should be searched for first, before the standard set of directories. `LD_PRELOAD` specifies a list of additional, user-specified, shared libraries to be loaded before all others. In this task, we will only study `LD_PRELOAD`.
 
-**Step 1**. First, we will see how these environment variables influence the behavior of dynamic loader/linker when running a normal program. Please follow these steps:
+**Step 1**. First, create a file called **mylib.c** using the below command, which is a simulation program that basically overrides the `sleep()` function in `libc`.
 
-1. Let us build a dynamic link library. Create the following program, and name it `mylib.c`. It basically overrides the `sleep()` function in `libc`:
-    
-    ```
-    #include <stdio.h>
-    void sleep (int s)
-    {
-       /* If this is invoked by a privileged program,
-          you can do damages here! */
-       printf("I am not sleeping!\n");
-    }
-    ```
-    
-2. We can compile the above program using the following commands (in the `-lc` argument, the second character is ):
-   
-   ```
-    $ gcc -fPIC -g -c mylib.c
-    $ gcc -shared -o libmylib.so.1.0.1 mylib.o -lc
-    ```
-    
-3. Now, set the `LD_PRELOAD` environment variable:
-    
-    ```
-    $ export LD_PRELOAD=./libmylib.so.1.0.
-    ```
+```
+$ sudo nano mylib.c
+```
 
-4. Finally, compile the following program `myprog`, and in the same directory as the above dynamic link `librarylibmylib.so.1.0.1:`
+**Step 2**. Upon the opening of the nano editor , copy and paste the below provided program in the editor.
+
+```
+#include <stdio.h>
+void sleep(int s)
+{
+	printf("I'm a malicious program!\n");
+}
+```
+
+![Copy Paste mylib.c program in Nano editor](./media/task7-step2-mylib-file-nano-editor.png)
+
+**Step 3**.  To save the file, press **Ctrl + O**, press **Enter** to confirm the write action, and exit the nano editor by pressing **Ctrl+X**.
+
+**Step 4**. Close the old tab (Manipulated tab) and switch to the new tab that you created in the previous task (Unmanipulated tab).
+
+**Step 5**. Run the below command to generate a object file from **mylib.c**.
+
+```
+$ sudo gcc -fPIC -g -c mylib.c
+$ ls
+```
+
+![Generate mylib object file](./media/task7-step5-mylib-object-file.png)
+
+> **Note:** If you get error message while generating the onject file such as **No permission** or **No such file or directory found**, then close the terminal application and launch it again.  
+
+**Step 6**. Nect, create a shared library by running the below commands. 
+
+```
+$ sudo gcc -shared -o libmylib.so.1 mylib.o -lc
+$ ls
+```
+
+![Create shared library](./media/task7-step6-create-shared library.png)
+
+**Step 7**. You have now set the LD_PRELOAD environment variable. Execute the commands following commands to check the the value LD_PRELOAD variable. Its value will be the library name.
+
+```
+$ export LD_PRELOAD=./libmylib.so.1
+$ echo $LD_PRELOAD
+```
+
+![Export LD Library](./media/task7-step7-export-ld-library.png)
+
+**Step 8**. Now, you have to compare it with **myprog** file. Run the below provided commands to create another file called **myprog.c**.
+
+```
+$ sudo nano myprog.c
+```
+
+**Step 9**. Once the nano editor launches, copy and paste the below provided program in the editor. This program will recor the sleep function by default from the system library.
+
+```
+#include <unistd.h>
+int main()
+{
+    sleep(1);
+    return 0;
+}
+```
+
+![Create myprog file](./media/task7-step9-create-myprog-file.png)
+
+**Step 10**. Save the file, by pressing **Ctrl + O**, press **Enter** to confirm the write action, and exit the nano editor by pressing **Ctrl+X**.
+
+**Step 11**. Execute the below commands to compile and run the **myprog.c** program. You will see that you are calling a malicious function. 
+
+```
+$ sudo gcc myprog.c -o myprog
+$ ./myprog
+```
+
+![myprog file output](./media/task7-step11-myprog-file-output.png)
+
+**Step 12**. Now change the **myprog** to a Set-UID program and run it as a normal user using the below commands. When you run the program, you will observe that there is one second sleep before continuing to the next prompt. Notice that in this case, malicious program is not called.
+
+```
+$ sudo chown root myprog
+$ sudo chmod 4755 myprog
+$ ls -l myprog
+$ ./myprog
+```
+
+![Udate myprog privilege](./media/task7-step12-update-myprog-privilege.png)
+
+**Step 13**. You need to run the **myprog** in root account. Run the commands below to switch to root user.
+
+```
+$ sudo su
+```
+
+![Login sudo su](./media/task7-step13-login-sudo-su.png)
+
+**Step 14**. In the root environment, **LD_PRELOAD** will be empty. Therefore, run the below commands to verify if the previously set value is present or not, and to set the environment variable value again.
+
+```
+$ echo $LD_PRELOAD
+$ export LD_PRELOAD=./libmylib.so.1
+$ echo $LD_PRELOAD
+```
+
+![Initialize ld preload again](./media/task7-step14-initialize-ld-preload-again.png)
+
+**Step 15**. Run the **myprog** using the below commands. You will see that you are attacked as the malicious code is called. Also, running **id** command will display the privileges with which the command was run. You will notice an ID **uid=0(root)**, which means that your command/program ran with root privilege.
+
+```
+$ ./myprog
+$ id
+```
+
+![Execute myprog again](./media/task7-step15-execute myprog-again.png)
+
+**Step 16**. Exit the root user by running `exit` command. It will return you to the seed user.
+
+**Step 17**. Now, you need to make `myprog` a `Set-UID` user1 program (i.e., the owner is user1, which is another user account), export the LD_PRELOAD environment variable again in a different user’s account (not-root user) and run it. Execute the below commands to create a user.
+
+```
+$ sudo adduser user1
+```
+
+**Step 18**. Provide the below values for the respected property.
+
+    - **New password:** Password.1!! (Password can be of your choice. Ensure to note it down)
     
-    ```
-    /* myprog.c */
-    #include <unistd.h>
-    int main()
-    {
-       sleep(1);
-       return 0;
-    }
-    ```
+    - **Re-type new password:** Password.1!! 
 
-**Step 2**. After you have done the above, please run `myprog` under the following conditions, and observe what happens.
+    - **Full Name []:** user 1 for test
 
-- Make `myproga` a regular program, and run it as a normal user.
-- Make `myproga` a `Set-UID` root program, and run it as a normal user.
-- Make `myproga` a `Set-UID` root program, export the LD_PRELOAD environment variable again in the root account and run it.
-- Make `myproga` a `Set-UID` user1 program (i.e., the owner is user1, which is another user account), export the LD_PRELOAD environment variable again in a different user’s account (not-root user) and run it.
+    - **Room Number []:** Press Enter 
 
-**Step 3**. You should be able to observe different behaviors in the scenarios described above, even though you are running the same program. You need to figure out what causes the difference. Environment variables play a role here. Please design an experiment to figure out the main causes, and explain why the behaviors in Step 2 are different. (Hint: the child process may not inherit the LD*environment variables).
+    - **Work Phone []:** Press Enter
+
+    - **Home Phone []:** Press Enter
+
+    - **Other []:** Press Enter
+
+    - **Is the information correct? [Y/n]:** Y
+
+![Create user1](./media/task7-step18-create-user1.png)
+
+**Step 19**. Execute below commands which firstly lists the **myprog** ownership details and the follwowing commands will change the ownership of **myprog** to user1.
+
+```
+$ ls -l myprog
+$ sudo chown user1 myprog
+$ sudo chmod 4755 myprog
+$ ls -l myprog
+```
+
+![Change file ownership](./media/task7-step19-change-file-ownership.png)
+
+**Step 20**. Next, change the user group to user1 and also make the program a Set-UID program again since you changed the group, by running the below commands.
+
+```
+$ sudo chown user1:user1 myprog
+$ ls -l myprog
+$ sudo chmod 4755 myprog
+$ ls -l myprog
+```
+
+![Change user group](./media/task7-step20-change-user-group.png)
+
+**Step 21**. Run the **myprog** Set-UID program using the below command. You will see that the program will run normally. It records a normal sleep function which sleeps for a second and then continues.
+
+```
+$ ./myprog
+```
+
+**Step 22**. Even the **LD_PRELOAD** environment variable will be here which contains malicious library. But it will be protected by operating system.
+
+```
+$ echo $LD_PRELOAD
+```
+
+![Check ld-preload in user1](./media/task7-step22-check ld-preload-in-user1.png)
+
+In conclusion, in the child process, the LD_PRELOAD is not passed into the environment of myprog when it's a Set-UID program. However, if it is a normal program, then the LD_PRELOAD environment variable is passed into the environment and the malicious code will be called.  
+
 
 ### 2.8 Task 8: Invoking External Programs Using `system()` versus `execve()`
 
