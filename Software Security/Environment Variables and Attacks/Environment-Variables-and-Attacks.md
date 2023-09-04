@@ -704,7 +704,7 @@ $ ./myprog
 $ echo $LD_PRELOAD
 ```
 
-![Check ld-preload in user1](./media/task7-step22-check ld-preload-in-user1.png)
+![Check ld-preload in user1](./media/task7-step22-check-ld-preload-in-user1.png)
 
 In conclusion, in the child process, the LD_PRELOAD is not passed into the environment of myprog when it's a Set-UID program. However, if it is a normal program, then the LD_PRELOAD environment variable is passed into the environment and the malicious code will be called.  
 
