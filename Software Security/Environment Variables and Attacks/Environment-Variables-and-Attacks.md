@@ -140,7 +140,7 @@ execve("/usr/bin/env", argv, environ);
 
 **Step 3**. Compile the **myenv.c** file using `sudo gcc myenv.c -o myenv2` ***(1)*** and execute it using `./myenv2` ***(2)***. You can now see the new programs getting its environment variables.
 
-![Compile and run myenv2](./media/exe2.3-task3-step3-compile-run-myenv2.png.png)
+![Compile and run myenv2](./media/exe2-task3-step3-compile-run-myenv2.png.png)
 
 ### 2.4 Task 4: Environment Variables and system()
 
